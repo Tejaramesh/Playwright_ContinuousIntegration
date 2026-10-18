@@ -1,4 +1,4 @@
-name: Playwright Tests
+name: Playwright Tests (Sharded)
 
 on:
   push:
@@ -9,6 +9,13 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false # Keep other shards running if one shard fails
+      matrix:
+        # Define the shard indices (0, 1, 2 = 3 parallel runners)
+        shard: [0, 1, 2]
+        total-shards: [3]
+
     steps:
       - uses: actions/checkout@v4
 
@@ -20,17 +27,21 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pytest playwright pytest-playwright pytest-html
+          pip install pytest playwright pytest-playwright pytest-html pytest-shard
           playwright install --with-deps
 
-      - name: Run Playwright tests and generate report
+      - name: Run Playwright test shard
         run: |
-          pytest --html=reports/report.html --self-contained-html
+          pytest \
+            --shard-id=${{ matrix.shard }} \
+            --num-shards=${{ matrix.total-shards }} \
+            --html=reports/report-${{ matrix.shard }}.html \
+            --self-contained-html
 
-      - name: Upload Test Report
-        if: always() # Ensures report is uploaded even if tests fail
+      - name: Upload Shard Report
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-test-report
+          name: test-report-shard-${{ matrix.shard }}
           path: reports/
-          retention-days: 7
+          retention-days: 14
