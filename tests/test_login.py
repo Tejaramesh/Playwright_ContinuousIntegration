@@ -5,7 +5,7 @@ import pytest
 @pytest.mark.parametrize("pw_browser",["chromium","firefox","webkit"])
 def test_login(pw_browser):
     with sync_playwright() as p:
-        browser=getattr(p,pw_browser).launch(headless=False,slow_mo=0)
+        browser=getattr(p,pw_browser).launch(headless=True,slow_mo=0)
         page=browser.new_page()
         page.goto("https://shop.qaautomationlabs.com/index.php")
         page.fill('input[id="email"]',"demo@demo.com")
